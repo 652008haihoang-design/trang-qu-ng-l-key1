@@ -1,0 +1,109 @@
+# trang-qu-ng-l-key1
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Quản Lý Key TikTok Xu</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background: #121212; color: #fff; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 8px; }
+    h2 { margin-bottom: 20px; color: #00f2fe; text-align: center; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; }
+    input, select, button { width: 100%; padding: 10px; border-radius: 5px; border: none; font-size: 16px; }
+    input, select { background: #2a2a2a; color: white; border: 1px solid #444; }
+    button { background: #00f2fe; color: #000; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #4facfe; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #444; padding: 10px; text-align: left; }
+    th { background: #2a2a2a; color: #00f2fe; }
+    .btn-delete { background: #ff4d4d; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Trang Quản Lý Key (Dành Cho Chủ Shop)</h2>
+    
+    <div class="form-group">
+      <label for="key-days">Thời hạn Key (Ngày):</label>
+      <input type="number" id="key-days" value="30" min="1">
+    </div>
+    <button onclick="generateKey()">Tạo Key Mới</button>
+
+    <h3 style="margin-top: 30px;">Danh Sách Key Hiện Có</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Mã Key</th>
+          <th>Ngày Hết Hạn</th>
+          <th>Trạng Thái</th>
+          <th>Hành Động</th>
+        </tr>
+      </thead>
+      <tbody id="key-table-body">
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    function getKeys() {
+      return JSON.parse(localStorage.getItem('tiktok_keys') || '{}');
+    }
+
+    function saveKeys(keys) {
+      localStorage.setItem('tiktok_keys', JSON.stringify(keys));
+    }
+
+    function generateKey() {
+      const days = parseInt(document.getElementById('key-days').value) || 30;
+      const randomKey = 'TTXU-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      
+      const expireDate = new Date();
+      expireDate.setDate(expireDate.getDate() + days);
+
+      const keys = getKeys();
+      keys[randomKey] = expireDate.toISOString();
+      saveKeys(keys);
+
+      alert('Đã tạo Key thành công: ' + randomKey);
+      renderKeys();
+    }
+
+    function deleteKey(key) {
+      if (confirm('Bạn có chắc muốn xóa Key: ' + key + '?')) {
+        const keys = getKeys();
+        delete keys[key];
+        saveKeys(keys);
+        renderKeys();
+      }
+    }
+
+    function renderKeys() {
+      const keys = getKeys();
+      const tbody = document.getElementById('key-table-body');
+      tbody.innerHTML = '';
+
+      const now = new Date();
+
+      for (let key in keys) {
+        const expireDate = new Date(keys[key]);
+        const isExpired = expireDate < now;
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+          <td style="font-weight: bold; color: #00f2fe;">${key}</td>
+          <td>${expireDate.toLocaleDateString('vi-VN')}${expireDate.toLocaleTimeString('vi-VN')}</td>
+          <td style="color: ${isExpired ? '#ff4d4d' : '#4cd137'};">${isExpired ? 'Hết hạn' : 'Đang hoạt động'}</td>
+          <td><button class="btn-delete" onclick="deleteKey('${key}')">Xóa</button></td>
+        `;
+        tbody.appendChild(row);
+      }
+    }
+
+    // Load danh sách key khi mở trang
+    renderKeys();
+  </script>
+</body>
+</html>
